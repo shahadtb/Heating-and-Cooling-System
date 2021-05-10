@@ -1,0 +1,87 @@
+/* Creator: Shahad Ababtain
+   Date: 05/05/2021	
+
+Description: 
+This system includes a temperature sensor, lcd monitor to display the current 
+temperature, a motor that helps rotates the fan and other components 
+such as a battery, LED lights to show if the system is in heating or cooling mode in accordance
+to the temperature. 
+
+ */
+
+
+#include <LiquidCrystal.h>
+
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2); //  pins of the LCD monitor 
+    
+
+int LED1=8; //BLUE LED LIGHT
+int LED2=7; //RED LED LIGHT
+const int MOTOR = 9; // motor pin is at pin 9
+float tmpCurrentVal; // records the anaolg value of the current temprature of the system/room
+int MotorValue=0; // records the analog value of POT and stores it in MotoValue Variable
+const int pot=0; //potentionmeter connected to pin 0 (analog 0)
+float tmpValueC; // temeprature after calculation 
+int tmp=1; //tmp sensor for measuring & adjusting the temprature
+
+
+void setup() // this  is the set up function that runs once when the system starts working 
+{
+  Serial.begin(9600); //begin serial communication
+  
+  // blue and red leds as outputs 
+  pinMode(LED1, OUTPUT);
+  pinMode(LED2, OUTPUT);
+  pinMode(MOTOR,OUTPUT);} //fan as an output as well (motor)
+
+
+void loop()                     
+{
+  
+ tempcCalculation(); // this a separate function that takes the reading of the temperature from the sensor and converts it a temperature value and converts it Celsius 
+ lcd.setCursor(0,0); // setting the cursor of lcd at 0 column and 0 rows 
+ lcd.print(tmpValueC); // printing the value on the lcd monitor, the temperature value 
+ lcd.print(" degrees C"); // print text next to the previous value 
+ // serial print commands below are to show the values clearly on the serial monitor 
+ Serial.print(tmpValueC); 
+ Serial.print('\n'); 
+ delay (1000); // delay requested value is 1 second which equals 1000 ms 
+  
+ MotorFanSetUp(); // this sperate function is relate to the motor set-up and calculation/speed setup
+ // serial print commands below are to show the values clearly on the serial monitor 
+ Serial.print("Motor Speed");
+ Serial.print(MotorValue);
+ Serial.print('\n'); 
+
+  // if conditions to check whether the temperature value is below or above certain limits, and if so, it will perfom the following commands
+  
+  
+  if (tmpValueC<20)// when the temperature is below 20 degrees, it should shut off the blue light and switch on red light, and the fan
+  { 
+     digitalWrite(LED1, LOW);digitalWrite(LED2, HIGH); 
+     digitalWrite(MOTOR, MotorValue);
+  } 
+   if (tmpValueC>28) // when the temperature is above 28 degrees, the program must shut off red light and switch on blue led light, and the fan
+   {  
+   digitalWrite(LED1, HIGH);digitalWrite(LED2, LOW); 
+     digitalWrite(MOTOR, MotorValue); }
+  
+  if ((tmpValueC>20) && (tmpValueC <28)) //when the temperature is in between 20 and 28, then all leds and fan must be switched off. 
+  { 
+    digitalWrite(LED1, LOW); digitalWrite(LED2, LOW); 
+    digitalWrite(MOTOR, LOW); 
+  } 
+}
+void MotorFanSetUp(){ // this sperate function is relate to the motor set-up and calculation/speed setup
+  MotorValue=analogRead(pot); 
+  MotorValue=map(MotorValue,0,1023,0,255); 
+  analogWrite(MOTOR, MotorValue); 
+}
+ // this a separate function that takes the reading of the temperature from the sensor and converts it a temperature value and converts it Celsius 
+void tempcCalculation(){
+  tmpCurrentVal = analogRead(tmp);
+  tmpValueC = tmpCurrentVal / 1024;  
+  tmpValueC = tmpValueC * 5;                    
+  tmpValueC = tmpValueC - 0.5;                   
+  tmpValueC = tmpValueC * 100; // converting to celsius 
+}
